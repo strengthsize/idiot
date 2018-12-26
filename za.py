@@ -308,12 +308,6 @@ if not remote or remote_type == 'READER':
 	print '  Waiting for EMULATOR activation...'
 	status= emulator.acs_send_apdu(PN532_APDU['TG_INIT_AS_TARGET']+mode+sens_res+uid+sel_res+felica+nfcid+lengt+gt+lentk+tk)
 	status= emulator.acs_send_apdu(PN532_APDU['TG_GET_DATA'])
-    	data= emulator.data
-	if not status or not emulator.data[:4] == 'D58D':
-		print 'Target Init failed:', emulator.errorcode, emulator.ISO7816ErrorCodes[emulator.errorcode]
-		if remote:
-			connection.close()
-		os._exit(True)
 	data= emulator.data
 if remote:
 	if remote_type == 'READER':
@@ -322,7 +316,7 @@ if remote:
 		print '  Waiting for remote EMULATOR activation...'
 		connection.settimeout(None)
 		data= recv_data(connection)
-
+"""
 mode= int(data[4:6],16)
 baudrate= mode & 0x70
 print '  Emulator activated:'
@@ -338,14 +332,15 @@ print '     Framing:', PN532_FRAMING[framing]
 initiator= data[6:]
 print '   Initiator:', initiator
 print
+"""
 
 print '  Waiting for APDU...'
 started= False
-firsttime=True
+firsttime = True
 try:
 	while 42:
 		# wait for emulator to receive a command
-		if not remote or remote_type == 'READER' or not firsttime:
+		if not remote or remote_type == 'READER' and not firsttime:
 			status= emulator.acs_send_apdu(PN532_APDU['TG_GET_DATA'])
 			data= emulator.data
 			#if not status or not emulator.data[:4] == 'D587':
@@ -355,8 +350,11 @@ try:
 				if remote:
 					connection.close()
 				os._exit(True)
-		firsttime=False
-		if remote:
+				
+				
+				
+				
+		if remote and not firsttime:
 			if remote_type == 'READER':
 				send_data(connection,data)
 			else:
