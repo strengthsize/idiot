@@ -106,6 +106,14 @@ def recv_data(host):
 		os._exit(True)
 	return out[:-2]
 
+	
+def relaytotag():
+	if not remote or remote_type == 'EMULATOR':  #if reader
+		status= card.acs_send_direct_apdu(data[6:])
+		data= card.data
+		errorcode= card.errorcode
+		return data
+
 try:
         card= rfidiot.card
 except:
@@ -307,6 +315,7 @@ if tags > 1:
 if not remote or remote_type == 'READER':
 	print '  Waiting for EMULATOR activation...'
 	status= emulator.acs_send_apdu(PN532_APDU['TG_INIT_AS_TARGET']+mode+sens_res+uid+sel_res+felica+nfcid+lengt+gt+lentk+tk)
+	status= emulator.acs_send_apdu(PN532_APDU['TG_GET_DATA'])
 	if not status or not emulator.data[:4] == 'D58D':
 		print 'Target Init failed:', emulator.errorcode, emulator.ISO7816ErrorCodes[emulator.errorcode]
 		if remote:
@@ -339,19 +348,26 @@ print
 
 print '  Waiting for APDU...'
 started= False
+firsttime= True
 try:
 	while 42:
 		# wait for emulator to receive a command
-		if not remote or remote_type == 'READER':
-			status= emulator.acs_send_apdu(PN532_APDU['TG_GET_DATA'])
-			data= emulator.data
-			#if not status or not emulator.data[:4] == 'D587':
-			if not status:
-				print 'Target Get Data failed:', emulator.errorcode, emulator.ISO7816ErrorCodes[emulator.errorcode]
-				print 'Data:', emulator.data
-				if remote:
-					connection.close()
-				os._exit(True)
+		if firsttime:
+			if not remote or remote_type == 'READER':   #if emulator
+				status= emulator.acs_send_apdu(PN532_APDU['TG_GET_DATA'])
+				data= emulator.data
+				#if not status or not emulator.data[:4] == 'D587':
+				if not status:
+					print 'Target Get Data failed:', emulator.errorcode, emulator.ISO7816ErrorCodes[emulator.errorcode]
+					print 'Data:', emulator.data
+					if remote:
+						connection.close()
+					os._exit(True)
+		else:
+			relaytotag():
+			firsttime= False
+		
+		
 		if remote:
 			if remote_type == 'READER':
 				send_data(connection,data)
@@ -359,6 +375,9 @@ try:
 				connection.settimeout(None)
 				data= recv_data(connection)
 		errorcode= int(data[4:6],16)
+		
+		
+		
 		if not errorcode == 0x00:
 			if remote:
 				connection.close()
@@ -371,20 +390,34 @@ try:
 				os._exit(False)
 			print 'Error:',PN532_ERRORS[errorcode]
 			os._exit(True)
+		
+		
+		
+		
 		if not quiet:
 			print '<<', data[6:]
 		else:
 			if not started:
 				print '  Logging started...'
 				started= True
+		
+		
+		
 		if logging:
 			logfile.write('<< %s\n' % data[6:])
 			logfile.flush()
 		# relay command to tag
-		if not remote or remote_type == 'EMULATOR':
+		
+		
+		
+		# relaytotag():
+		if not remote or remote_type == 'EMULATOR':  #if reader
 			status= card.acs_send_direct_apdu(data[6:])
 			data= card.data
 			errorcode= card.errorcode
+		
+		
+		
 		if remote:
 			if remote_type == 'EMULATOR':
 				send_data(connection,data)
@@ -392,20 +425,56 @@ try:
 			else:
 				data= recv_data(connection)
 				errorcode= recv_data(connection)
+		
+		
+		
+		
+		
+		
 		if not quiet:
 			print '>>', data, errorcode
+		
+		
+		
+		
+		
+
+		
+		
 		if logging:
 			logfile.write('>> %s %s\n' % (data,errorcode))
 			logfile.flush
 		# relay tag's response back via emulator
 		if not remote or remote_type == 'READER':
 			status= emulator.acs_send_apdu(PN532_APDU['TG_SET_DATA']+[data]+[errorcode])
+
+			
+			
+			
+			
 except:
+		
+		
+		
+		
+		
 		if logging:
 			logfile.close()
 		print '  Session ended with possible errors'
+		
+		
+		
+		
+		
+		
 		if remote:
 			connection.close()
+		
+		
+		
+		
+		
+		
 		if not remote or remote_type == 'READER':
 			emulator.acs_send_apdu(card.PCSC_APDU['ACS_LED_GREEN'])
 		os._exit(True)
