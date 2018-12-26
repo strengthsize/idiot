@@ -360,6 +360,7 @@ try:
 			else:
 				connection.settimeout(None)
 				data= recv_data(connection)
+		firsttime=
 		errorcode= int(data[4:6],16)
 		if not errorcode == 0x00:
 			if remote:
