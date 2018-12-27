@@ -253,6 +253,9 @@ if not remote or remote_type == 'EMULATOR':
 	full_uid= card.uid
 	sens_res= [card.sens_res]
 	sel_res= [card.sel_res]
+	atr = [card.pcsc_atr]
+	
+	
 if remote:
 	if remote_type == 'READER':
 		print '  Waiting for remote TAG...'
@@ -260,31 +263,25 @@ if remote:
 		full_uid= recv_data(connection)
 		sens_res= [recv_data(connection)]
 		sel_res= [recv_data(connection)]
+		atr= [recv_data(connection)]
 	else:
 		send_data(connection,card.uid)
 		send_data(connection,card.sens_res)
 		send_data(connection,card.sel_res)
-		
+		send_data(connectio,card.pcsc_atr)	
 mode= ['00']
 print '         UID:', full_uid
 uid= [full_uid[2:]]
 print '    sens_res:', sens_res[0]
 print '     sel_res:', sel_res[0]
 print
+histlen= int(atr[3],16)
 felica= ['01fea2a3a4a5a6a7c0c1c2c3c4c5c6c7ffff']
 nfcid=  ['aa998877665544332211']
-try:
-	lengt= ['%02x' % (len(args[6]) / 2)]
-	gt= [args[6]]
-except:
-	lengt= ['00']
-	gt= ['']
-try:
-	lentk= ['%02x' % (len(args[7]) / 2)]
-	tk= [args[7]]
-except:
-	lentk= ['00']
-	tk= ['']
+gt= ['00']
+lengt= ['%02x' % (len(gt[0]) / 2)]
+tk = atr[8:(4+histlen)*2]	
+lentk= ['%02x' % (len(tk[0]) / 2)]
 
 if not remote or remote_type == 'EMULATOR':
 	if card.acs_send_apdu(PN532_APDU['GET_GENERAL_STATUS']):
