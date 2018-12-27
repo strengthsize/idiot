@@ -300,12 +300,19 @@ if tags > 1:
 	os._exit(True)
 
 #emulator.acs_send_apdu(emulator.PCSC_APDU['ACS_SET_PARAMETERS']+['14'])
-
+	target = False
+	getdata = False
 if not remote or remote_type == 'READER':
 	print '  Waiting for EMULATOR activation...'
 	status= emulator.acs_send_apdu(PN532_APDU['TG_INIT_AS_TARGET']+mode+sens_res+uid+sel_res+felica+nfcid+lengt+gt+lentk+tk)
+	target = True
+	data = emulator.data
+	print 'Data from TG_INIT_AS_TARGET: ', data
 	status= emulator.acs_send_apdu(PN532_APDU['TG_GET_DATA'])
 	data= emulator.data
+	getdata = True
+	print 'Data from TG_GET_DATA: ', data[]
+	print target , getdata
 if remote:
 	if remote_type == 'READER':
 		send_data(connection,data)
@@ -357,7 +364,7 @@ try:
 			else:
 				connection.settimeout(None)
 				data= recv_data(connection)
-		firsttime=
+		firsttime= False
 		errorcode= int(data[4:6],16)
 		if not errorcode == 0x00:
 			if remote:
